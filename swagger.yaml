@@ -1,0 +1,370 @@
+openapi: 3.0.0
+info:
+  title: E-Commerce API
+  description: API documentation for the E-Commerce backend application.
+  version: 1.0.0
+servers:
+- url: http://localhost:3000
+  description: Local Development Server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserRegister:
+      type: object
+      required:
+      - name
+      - email
+      - password
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    UserLogin:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    Product:
+      type: object
+      properties:
+        brand:
+          type: string
+        price:
+          type: number
+        subcategory:
+          type: string
+        description:
+          type: string
+        ratings:
+          type: number
+        release:
+          type: string
+          format: date
+
+    CommentRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        ratings:
+          type: number
+          default: 0
+
+    ReviewRequest:
+      type: object
+      required:
+      - rating
+      properties:
+        rating:
+          type: number
+
+tags:
+- name: Auth
+  description: User authentication and registration
+- name: Home & Admin
+  description: Homepage data and Admin product management
+- name: Products
+  description: Product retrieval, filtering, and interactions
+
+paths:
+  # -------------------------
+  # AUTH ROUTES
+  # -------------------------
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [ Auth ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        200:
+          description: Registered Successfully
+        400:
+          description: User Email Already Exists
+        500:
+          description: Server Error
+
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [ Auth ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        200:
+          description: Logged In Successfully (Returns Access Token)
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                description: access_token cookie
+        404:
+          description: User Not Found
+
+  # -------------------------
+  # HOME & ADMIN ROUTES
+  # -------------------------
+  /:
+    get:
+      summary: Get Home Page Products
+      description: Returns top ranked products grouped by subcategory
+      tags: [ Home & Admin ]
+      responses:
+        200:
+          description: List of products
+        500:
+          description: Server Error
+
+  /add:
+    post:
+      summary: Add a new product (Admin Only)
+      tags: [ Home & Admin ]
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        200:
+          description: Product Added
+        403:
+          description: No Access
+        500:
+          description: Server Error
+
+  /update:
+    post:
+      summary: Update a product (Admin Only)
+      tags: [ Home & Admin ]
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+        required: false
+        description: Technically the code looks for req.params.id, but since the route is defined as just /update, it might be expecting it differently. If the route is /update/:id, move this to path.
+      # Based on your router code: Router.post("/update", updateProduct) and controller const { id } = req.params;
+      # Note: This is actually a bug in your code. req.params is for /update/:id. If the route is just /update, you must use req.query or req.body. 
+      # Assuming route is actually /update/:id for this swagger:
+      responses:
+        200:
+          description: Product Updated
+        403:
+          description: No Access
+
+  /delete:
+    post:
+      summary: Delete a product (Admin Only)
+      tags: [ Home & Admin ]
+      security:
+      - bearerAuth: []
+      # Note: Same logic as update. Assuming /delete/:id based on controller logic req.params
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: string
+      responses:
+        200:
+          description: Product Deleted
+        403:
+          description: No Access
+
+  # -------------------------
+  # PRODUCT ROUTES
+  # -------------------------
+  /product/all:
+    get:
+      summary: Get all products
+      tags: [ Products ]
+      responses:
+        200:
+          description: List of all products
+        500:
+          description: Server Error
+
+  /product/sub/{sub_id}:
+    get:
+      summary: Get products by Subcategory ID
+      tags: [ Products ]
+      parameters:
+      - in: path
+        name: sub_id
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: List of products in subcategory
+
+  /product/cat/{cat_id}:
+    get:
+      summary: Get subcategories by Category ID
+      tags: [ Products ]
+      parameters:
+      - in: path
+        name: cat_id
+        schema:
+          type: string
+        required: true
+      responses:
+        200:
+          description: List of subcategories
+
+  /product/filter/{sub_id}/{brand}/{ltprice}/{gtprice}:
+    get:
+      summary: Filter products
+      tags: [ Products ]
+      parameters:
+      - in: path
+        name: sub_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: brand
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: ltprice
+        required: true
+        description: Less than price (Max Price)
+        schema:
+          type: number
+      - in: path
+        name: gtprice
+        required: true
+        description: Greater than price (Min Price)
+        schema:
+          type: number
+      responses:
+        200:
+          description: Filtered list of products
+
+  /product/addcomment/{parent_id}:
+    post:
+      summary: Add a comment to a product
+      tags: [ Products ]
+      security:
+      - bearerAuth: []
+      parameters:
+      - in: path
+        name: parent_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+      responses:
+        200:
+          description: Commented
+
+  /product/showcomment/{parent_id}:
+    get:
+      summary: Show direct comments for an ID
+      tags: [ Products ]
+      parameters:
+      - in: path
+        name: parent_id
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: List of comments
+
+  /product/showallcomments/{parent_id}:
+    get:
+      summary: Show comments with nested child comments
+      tags: [ Products ]
+      parameters:
+      - in: path
+        name: parent_id
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Nested comments
+
+  /product/addreviews/{parent_id}:
+    post:
+      summary: Add a rating/review to a product
+      tags: [ Products ]
+      parameters:
+      - in: path
+        name: parent_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      responses:
+        200:
+          description: Review Added (Triggers addcomment internally)
+
+  /product/addlikes/{parent_id}:
+    post:
+      summary: Like a comment
+      tags: [ Products ]
+      parameters:
+      - in: path
+        name: parent_id
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Liked The Comment
+
+  /product/adddislikes/{parent_id}:
+    post:
+      summary: Dislike a comment
+      tags: [ Products ]
+      parameters:
+      - in: path
+        name: parent_id
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Comment Disliked
