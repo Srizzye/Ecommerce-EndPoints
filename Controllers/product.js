@@ -92,6 +92,7 @@ const showcommentsforid = async (req, res) => {
   }
 };
 
+
 const showallcomments = async (req, res) => {
   try {
     const { parent_id } = req.params;
@@ -113,6 +114,7 @@ const showallcomments = async (req, res) => {
     res.send(`Error In Show All Comments ${error}`);
   }
 };
+
 
 const addreviews = async (req, res) => {
   try {
@@ -143,6 +145,7 @@ const addlike = async (req, res) => {
     res.send(`Error In Liking A Comment : ${error}`);
   }
 };
+
 
 const adddislike = async (req, res) => {
   try {

@@ -69,6 +69,8 @@ const AuthenticateToken = async (req, res, next) => {
       req.isAdmin = true;
       console.log("You Are A Admin");
     }
+    const user = await Users.findOne({ email: decoded.email });
+    req.userId = user._id;
     req.userMail = decoded.email;
     console.log("Token Verified");
     next();

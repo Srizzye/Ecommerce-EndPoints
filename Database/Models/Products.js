@@ -8,7 +8,7 @@ const ProductSchema = mongoose.Schema({
   release: String,
   brand: String,
   ratings: {
-    type: Number,
+    type: Number, 
     default: 0,
   },
   Specification: [Object],

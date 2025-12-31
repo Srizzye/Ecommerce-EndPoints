@@ -3,6 +3,20 @@ const Product = require("../Database/Models/Products");
 const getHome = async (req, res) => {
   try {
     const HomeResult = await Product.aggregate([
+      // {
+      //   $setWindowFields: {
+      //     partitionBy: "$subcategory",
+      //     sortBy: { release: -1 },
+      //     output: {
+      //       rank: { $rank: {} },
+      //     },
+      //   },
+      // },
+      // {
+      //   $match: {
+      //     rank: { $lte: 2 },
+      //   },
+      // },
       {
         $setWindowFields: {
           partitionBy: "$subcategory",
@@ -13,9 +27,7 @@ const getHome = async (req, res) => {
         },
       },
       {
-        $match: {
-          rank: { $lte: 2 },
-        },
+        $match: { rank: { $lte: 2 } },
       },
     ]);
     res.send(HomeResult);

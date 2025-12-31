@@ -10,5 +10,5 @@ const {
 Router.get("/", getHome);
 Router.post("/add", addProduct);
 Router.post("/update/:id", updateProduct);
-Router.post("/delete/:id", deleteProduct);
+Router.delete("/delete/:id", deleteProduct);
 module.exports = Router;
