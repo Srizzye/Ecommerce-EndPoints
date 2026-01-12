@@ -2,13 +2,14 @@ const { default: mongoose } = require("mongoose");
 
 const ProductSchema = mongoose.Schema({
   name: String,
+  sellerId: mongoose.Types.ObjectId,
   price: Number,
   category: String,
   subcategory: String,
   release: String,
   brand: String,
   ratings: {
-    type: Number, 
+    type: Number,
     default: 0,
   },
   Specification: [Object],

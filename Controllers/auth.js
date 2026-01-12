@@ -39,7 +39,7 @@ const generate_access_token = async (name, email, password) => {
   }
 };
 
-const RegisterController = async (req, res) => {
+const CustomerRegisterController = async (req, res) => {
   console.log("Register HIT");
   const email = req.body.email;
   const user = await Users.findOne({ email: email });
@@ -51,6 +51,29 @@ const RegisterController = async (req, res) => {
       name: req.body.name,
       email: req.body.email,
       password: hashpass,
+      role: "customer",
+    };
+    const result = await Users.create(user);
+    res.send("Registered Successfully");
+  } catch (error) {
+    console.log("Error In Register:", error);
+    res.send(`Error ${error}`);
+  }
+};
+
+const SellerRegisterController = async (req, res) => {
+  console.log("Register HIT");
+  const email = req.body.email;
+  const user = await Users.findOne({ email: email });
+  if (user) return res.send("User Email Already Exists");
+  try {
+    const password = req.body.password;
+    const hashpass = await hash(password, 12);
+    const user = {
+      name: req.body.name,
+      email: req.body.email,
+      password: hashpass,
+      role: "seller",
     };
     const result = await Users.create(user);
     res.send("Registered Successfully");
@@ -70,6 +93,9 @@ const AuthenticateToken = async (req, res, next) => {
       console.log("You Are A Admin");
     }
     const user = await Users.findOne({ email: decoded.email });
+    if (user.role === "seller") {
+      req.isSeller = true;
+    }
     req.userId = user._id;
     req.userMail = decoded.email;
     console.log("Token Verified");
@@ -79,4 +105,9 @@ const AuthenticateToken = async (req, res, next) => {
   }
 };
 
-module.exports = { LoginController, RegisterController, AuthenticateToken };
+module.exports = {
+  LoginController,
+  CustomerRegisterController,
+  AuthenticateToken,
+  SellerRegisterController,
+};
